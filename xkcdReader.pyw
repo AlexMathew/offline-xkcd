@@ -1,7 +1,7 @@
 from Tkinter import *
 import webbrowser
 import os
-import psycopg2
+import sqlite3
 
 class Reader(Frame):
 	def __init__(self, master):
@@ -22,7 +22,7 @@ class Reader(Frame):
 
 		self.master.config(menu=self.menubar)
 
-		conn = psycopg2.connect("dbname=xkcd user=postgres password=postgres")
+		conn = sqlite3.connect("xkcd.db")
 		c = conn.cursor()
 		c.execute("SELECT * FROM xkcd")
 		comics = c.fetchall()
@@ -45,7 +45,7 @@ class Reader(Frame):
 if __name__ == '__main__':
 	root = Tk()
 	root.title("xkcd Reader")
-	root.geometry("640x480")
+	root.geometry("800x600")
 
 	reader = Reader(root)
 
