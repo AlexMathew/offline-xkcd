@@ -1,6 +1,7 @@
 from Tkinter import *
 import webbrowser
 import os
+import psycopg2
 
 class Reader(Frame):
 	def __init__(self, master):
@@ -20,6 +21,16 @@ class Reader(Frame):
 		menu.add_command(label="Credits")
 
 		self.master.config(menu=self.menubar)
+
+		conn = psycopg2.connect("dbname=xkcd user=postgres password=postgres")
+		c = conn.cursor()
+		c.execute("SELECT * FROM xkcd")
+		comics = c.fetchall()
+		c.close()
+		conn.close()
+
+		if not len(comics):
+			self.setup_page()		
 		
 		self.grid()
 		self.create_widgets()
@@ -27,10 +38,14 @@ class Reader(Frame):
 	def create_widgets(self):
 		return
 
+	def setup_page(self):
+		return
+
+
 if __name__ == '__main__':
 	root = Tk()
 	root.title("xkcd Reader")
-	root.geometry("200x200")
+	root.geometry("640x480")
 
 	reader = Reader(root)
 
