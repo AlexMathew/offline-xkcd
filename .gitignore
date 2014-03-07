@@ -35,6 +35,5 @@ nosetests.xml
 .project
 .pydevproject
 
-
-Comics/
 xkcd.db
+Comics/
