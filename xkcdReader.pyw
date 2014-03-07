@@ -24,10 +24,10 @@ class Reader(Frame):
 
 		self.master.config(menu=self.menubar)
 
-		if not "xkcd.db" in os.listdir("."):
+		if not "Comics" in os.listdir("."):
 			self.setup_page()		
 		else:
-			conn = sqlite3.connect("xkcd.db")
+			conn = sqlite3.connect("Comics/xkcd.db")
 			c = conn.cursor()
 			c.execute("SELECT * FROM xkcd")
 			self.comics = c.fetchall()
@@ -99,7 +99,7 @@ class Reader(Frame):
 		try:
 			os.mkdir("Comics")
 			x = xkcd()
-			conn = sqlite3.connect("xkcd.db")
+			conn = sqlite3.connect("Comics/xkcd.db")
 			c = conn.cursor()
 			c.execute("CREATE TABLE xkcd (num integer, title text, description text, explain text)")
 			conn.commit()
@@ -173,7 +173,7 @@ class Reader(Frame):
 	def update_db(self):
 		try:
 			x = xkcd()
-			conn = sqlite3.connect("xkcd.db")
+			conn = sqlite3.connect("Comics/xkcd.db")
 			c = conn.cursor()
 
 			if not self.updated == int(x.comic_set[0][0]):
