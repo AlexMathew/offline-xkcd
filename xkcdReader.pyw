@@ -31,7 +31,10 @@ class Reader(Frame):
 			c = conn.cursor()
 			c.execute("SELECT * FROM xkcd")
 			self.comics = c.fetchall()
-
+			self.updated = max(self.comics)[0]
+			c.close()
+			conn.close()
+			
 			self.create_widgets()
 		
 		self.grid()
@@ -101,17 +104,24 @@ class Reader(Frame):
 			c.execute("CREATE TABLE xkcd (num integer, title text, description text, explain text)")
 			conn.commit()
 
+			self.updated = int(x.comic_set[0][0])
+
 			for comic in x.comic_set:
 				number = int(comic[0])
 				img, title, desc, explain = x.get_comic(number)
 				c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
 				urllib.urlretrieve(img, "Comics/" + comic[0] + ".png")
-				self.status.delete(0.0, END)
-				self.status.insert(0.0, "Updating #" + comic[0] + " - " + title)
 				if number % 50 == 0:
 					conn.commit()
 
 			conn.commit()
+
+			self.status.delete(0.0, END)
+			self.status.insert(0.0, "And we're done ! Loaded till comic #" + str(self.updated))
+
+			c.close()
+			conn.close()
+
 		except Exception as detail:
 			self.status.delete(0.0, END)
 			self.status.insert(0.0, detail)
@@ -136,7 +146,67 @@ class Reader(Frame):
 	def update_page(self):
 		self.remove_home_widgets()
 
+		self.intro = Label(self,
+						   text = "Update your comic collection.\n\n")
+		self.intro.grid(row = 2, column = 0, columnspan = 4, sticky = W)
+
+		self.setup = Button(self, 
+							text = "UPDATE !" , 
+							command = self.update_db)
+		self.setup.grid(row = 5, column = 2, columnspan = 4, sticky = W)
+		
+		self.spacer = Label(self,
+							text = "\n\n")
+		self.spacer.grid(row = 7, column = 0, columnspan = 4, sticky = W)
+				
+		self.status = Text(self, 
+						   width = 90, 
+						   height = 10, 
+						   wrap = WORD)
+		self.status.delete(0.0, END)
+		self.status.insert(0.0, "Click 'UPDATE' to update your comic collection.. \n\n" + \
+								"If a 'Not Responding' error appears, just ignore it. We're fine. ")
+		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
+
 		return	
+
+	def update_db(self):
+		try:
+			x = xkcd()
+			conn = sqlite3.connect("xkcd.db")
+			c = conn.cursor()
+
+			if not self.updated == int(x.comic_set[0][0]):
+				for comic in x.comic_set:
+					number = int(comic[0])
+					if number == self.updated:
+						break
+					img, title, desc, explain = x.get_comic(number)
+					c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
+					urllib.urlretrieve(img, "Comics/" + comic[0] + ".png")
+					if number % 50 == 0:
+						conn.commit()
+
+				conn.commit()
+
+				self.updated = int(x.comic_set[0][0]) 
+
+				self.status.delete(0.0, END)
+				self.status.insert(0.0, "And we're done ! Loaded till comic #" + str(self.updated))
+
+			else:
+				self.status.delete(0.0, END)
+				self.status.insert(0.0, "We're already updated with the latest stuff.")
+
+			c.close()
+			conn.close()
+
+		except Exception as detail:
+			self.status.delete(0.0, END)
+			self.status.insert(0.0, detail)
+
+		return
+
 
 if __name__ == '__main__':
 	root = Tk()
