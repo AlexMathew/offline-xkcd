@@ -24,21 +24,45 @@ class Reader(Frame):
 
 		self.master.config(menu=self.menubar)
 
-		conn = sqlite3.connect("xkcd.db")
-		c = conn.cursor()
-		c.execute("SELECT * FROM xkcd")
-		comics = c.fetchall()
-		c.close()
-		conn.close()
-
-		if not len(comics):
+		if not "xkcd.db" in os.listdir("."):
 			self.setup_page()		
 		else:
+			conn = sqlite3.connect("xkcd.db")
+			c = conn.cursor()
+			c.execute("SELECT * FROM xkcd")
+			self.comics = c.fetchall()
+
 			self.create_widgets()
 		
 		self.grid()
 
 	def create_widgets(self):
+		self.spacer1 = Label(self,
+							text = "\n\n")
+		self.spacer1.grid(row = 0, column = 0, columnspan = 4, sticky = W)
+
+		self.intro = Label(self,
+						   text = "\t\tTHE xkcd READER")
+		self.intro.grid(row = 2, column = 0, columnspan = 4, sticky = W)
+
+		self.spacer2 = Label(self,
+							text = "\n\n")
+		self.spacer2.grid(row = 3, column = 0, columnspan = 4, sticky = W)
+
+		self.read = Button(self, 
+							text = "READ !" , 
+							command = self.read_page)
+		self.read.grid(row = 5, column = 1, columnspan = 4, sticky = W)
+
+		self.spacer3 = Label(self,
+							text = "\t\t")
+		self.spacer3.grid(row = 5, column = 2, columnspan = 4, sticky = W)
+
+		self.update = Button(self, 
+							text = "UPDATE !" , 
+							command = self.update_page)
+		self.update.grid(row = 5, column = 4, columnspan = 4, sticky = W)
+	
 		return
 
 	def setup_page(self):
@@ -56,36 +80,63 @@ class Reader(Frame):
 		self.spacer = Label(self,
 							text = "\n\n")
 		self.spacer.grid(row = 7, column = 0, columnspan = 4, sticky = W)
-		
-		return
-
-	def setup_db(self):
-		os.mkdir("Comics")
-		x = xkcd()
-		conn = sqlite3.connect("xkcd.db")
-		c = conn.cursor()
-		
+				
 		self.status = Text(self, 
 						   width = 90, 
 						   height = 10, 
 						   wrap = WORD)
 		self.status.delete(0.0, END)
-		self.status.insert(0.0, "")
+		self.status.insert(0.0, "Click 'SET UP' to start loading the comics.. \n\n" + \
+								"If a 'Not Responding' error appears, just ignore it. We're fine. ")
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
 
-		for comic in x.comic_set:
-			number = int(comic[0])
-			img, title, desc, explain = x.get_comic(number)
-			c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
-			urllib.urlretrieve(img, "Comics/" + comic[0] + ".png")
-			self.status.delete(0.0, END)
-			self.status.insert(0.0, "Updating #" + comic[0] + " - " + title)
-			if number % 50 == 0:
-				conn.commit()
+		return
 
-		conn.commit()
+	def setup_db(self):
+		try:
+			os.mkdir("Comics")
+			x = xkcd()
+			conn = sqlite3.connect("xkcd.db")
+			c = conn.cursor()
+			c.execute("CREATE TABLE xkcd (num integer, title text, description text, explain text)")
+			conn.commit()
+
+			for comic in x.comic_set:
+				number = int(comic[0])
+				img, title, desc, explain = x.get_comic(number)
+				c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
+				urllib.urlretrieve(img, "Comics/" + comic[0] + ".png")
+				self.status.delete(0.0, END)
+				self.status.insert(0.0, "Updating #" + comic[0] + " - " + title)
+				if number % 50 == 0:
+					conn.commit()
+
+			conn.commit()
+		except Exception as detail:
+			self.status.delete(0.0, END)
+			self.status.insert(0.0, detail)
 
 		return
+
+	def remove_home_widgets(self):
+		self.spacer1.destroy()
+		self.spacer2.destroy()
+		self.spacer3.destroy()
+		self.intro.destroy()
+		self.read.destroy()
+		self.update.destroy()
+
+		return
+
+	def read_page(self):
+		self.remove_home_widgets()
+
+		return
+
+	def update_page(self):
+		self.remove_home_widgets()
+
+		return	
 
 if __name__ == '__main__':
 	root = Tk()
