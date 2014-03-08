@@ -6,7 +6,7 @@ import sqlite3
 from xkcd import xkcd
 
 class Reader(Frame):
-	def __init__(self, master):
+	def __init__(self, master, read=None):
 		Frame.__init__(self, master)
 
 		self.menubar = Menu(self)
@@ -35,21 +35,22 @@ class Reader(Frame):
 			c.close()
 			conn.close()
 			
-			self.create_widgets()
+			if not read:
+				self.create_widgets()
 		
 		self.grid()
 
 	def create_widgets(self):
 		self.spacer1 = Label(self,
-							text = "\n\n")
+							text = "\n")
 		self.spacer1.grid(row = 0, column = 0, columnspan = 4, sticky = W)
 
 		self.intro = Label(self,
-						   text = "\t\tTHE xkcd READER")
+						   text = "\tTHE xkcd READER")
 		self.intro.grid(row = 2, column = 0, columnspan = 4, sticky = W)
 
 		self.spacer2 = Label(self,
-							text = "\n\n")
+							text = "\n")
 		self.spacer2.grid(row = 3, column = 0, columnspan = 4, sticky = W)
 
 		self.read = Button(self, 
@@ -57,14 +58,10 @@ class Reader(Frame):
 							command = self.read_page)
 		self.read.grid(row = 5, column = 1, columnspan = 4, sticky = W)
 
-		self.spacer3 = Label(self,
-							text = "\t\t")
-		self.spacer3.grid(row = 5, column = 2, columnspan = 4, sticky = W)
-
 		self.update = Button(self, 
 							text = "UPDATE !" , 
 							command = self.update_page)
-		self.update.grid(row = 5, column = 4, columnspan = 4, sticky = W)
+		self.update.grid(row = 5, column = 3, columnspan = 4, sticky = W)
 	
 		return
 
@@ -81,11 +78,11 @@ class Reader(Frame):
 		self.setup.grid(row = 5, column = 2, columnspan = 4, sticky = W)
 		
 		self.spacer = Label(self,
-							text = "\n\n")
+							text = "\n")
 		self.spacer.grid(row = 7, column = 0, columnspan = 4, sticky = W)
 				
 		self.status = Text(self, 
-						   width = 90, 
+						   width = 40, 
 						   height = 10, 
 						   wrap = WORD)
 		self.status.delete(0.0, END)
@@ -131,7 +128,6 @@ class Reader(Frame):
 	def remove_home_widgets(self):
 		self.spacer1.destroy()
 		self.spacer2.destroy()
-		self.spacer3.destroy()
 		self.intro.destroy()
 		self.read.destroy()
 		self.update.destroy()
@@ -140,6 +136,7 @@ class Reader(Frame):
 
 	def read_page(self):
 		self.remove_home_widgets()
+		self.quit()
 
 		return
 
@@ -156,11 +153,11 @@ class Reader(Frame):
 		self.setup.grid(row = 5, column = 2, columnspan = 4, sticky = W)
 		
 		self.spacer = Label(self,
-							text = "\n\n")
+							text = "\n")
 		self.spacer.grid(row = 7, column = 0, columnspan = 4, sticky = W)
 				
 		self.status = Text(self, 
-						   width = 90, 
+						   width = 40, 
 						   height = 10, 
 						   wrap = WORD)
 		self.status.delete(0.0, END)
@@ -211,8 +208,14 @@ class Reader(Frame):
 if __name__ == '__main__':
 	root = Tk()
 	root.title("xkcd Reader")
-	root.geometry("800x600")
+	root.geometry("400x400+0+0")
 
 	reader = Reader(root)
+
+	root.mainloop()
+
+	root.geometry("800x600+0+0")
+
+	reader = Reader(root, 1)
 
 	root.mainloop()
