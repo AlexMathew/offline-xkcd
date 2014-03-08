@@ -11,18 +11,23 @@ class Reader(Frame):
 
 		self.menubar = Menu(self)
 
-		menu = Menu(self.menubar, tearoff=0)
-		self.menubar.add_cascade(label="Options", menu=menu)
-		menu.add_command(label="Reader")
-		menu.add_command(label="Update comic collection")
+		readmenu = Menu(self.menubar, tearoff=0)
+		self.menubar.add_cascade(label="Reader Options", menu=readmenu)
+		readmenu.add_command(label="Reader", command=self.read_page)
+		readmenu.add_command(label="Update comic collection", command=self.update_page)
+		readmenu.add_separator()		
+		readmenu.add_command(label="Exit", command=self.quit)
 
-		menu = Menu(self.menubar, tearoff=0)
-		self.menubar.add_cascade(label="Help", menu=menu)
-		menu.add_command(label="Docs")
-		menu.add_command(label="About")
-		menu.add_command(label="Credits")
+		helpmenu = Menu(self.menubar, tearoff=0)
+		self.menubar.add_cascade(label="Help", menu=helpmenu)
+		helpmenu.add_command(label="Docs")
+		helpmenu.add_command(label="About")
+		helpmenu.add_command(label="Credits")
 
 		self.master.config(menu=self.menubar)
+
+		self.updated = 0
+		self.current_widgets = []
 
 		if not "Comics" in os.listdir("."):
 			self.setup_page()		
@@ -63,6 +68,7 @@ class Reader(Frame):
 							command = self.update_page)
 		self.update.grid(row = 5, column = 3, columnspan = 4, sticky = W)
 	
+		self.current_widgets.extend([self.spacer1, self.intro, self.spacer2, self.read, self.update])
 		return
 
 	def setup_page(self):
@@ -90,6 +96,7 @@ class Reader(Frame):
 								"If a 'Not Responding' error appears, just ignore it. We're fine. ")
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
 
+		self.current_widgets.extend([self.intro, self.setup, self.spacer, self.status])
 		return
 
 	def setup_db(self):
@@ -125,23 +132,21 @@ class Reader(Frame):
 
 		return
 
-	def remove_home_widgets(self):
-		self.spacer1.destroy()
-		self.spacer2.destroy()
-		self.intro.destroy()
-		self.read.destroy()
-		self.update.destroy()
+	def remove_widgets(self):
+		for widget in self.current_widgets:
+			widget.destroy()
+		self.current_widgets = []
 
 		return
 
 	def read_page(self):
-		self.remove_home_widgets()
+		self.remove_widgets()
 		self.quit()
 
 		return
 
 	def update_page(self):
-		self.remove_home_widgets()
+		self.remove_widgets()
 
 		self.intro = Label(self,
 						   text = "Update your comic collection.\n\n")
@@ -165,6 +170,7 @@ class Reader(Frame):
 								"If a 'Not Responding' error appears, just ignore it. We're fine. ")
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
 
+		self.current_widgets.extend([self.intro, self.setup, self.spacer, self.status])
 		return	
 
 	def update_db(self):
