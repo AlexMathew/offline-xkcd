@@ -5,29 +5,33 @@ import os
 import sqlite3
 from xkcd import xkcd
 
+current_op = 0
+
 class Reader(Frame):
-	def __init__(self, master, read=None):
+	def __init__(self, master):
 		Frame.__init__(self, master)
 
 		self.menubar = Menu(self)
 
 		readmenu = Menu(self.menubar, tearoff=0)
 		self.menubar.add_cascade(label="Reader Options", menu=readmenu)
-		readmenu.add_command(label="Reader", command=self.read_page)
-		readmenu.add_command(label="Update comic collection", command=self.update_page)
+		readmenu.add_command(label="Reader", command=self.read_page_setter)
+		readmenu.add_command(label="Update comic collection", command=self.update_page_setter)
 		readmenu.add_separator()		
 		readmenu.add_command(label="Exit", command=self.quit)
 
 		helpmenu = Menu(self.menubar, tearoff=0)
 		self.menubar.add_cascade(label="Help", menu=helpmenu)
 		helpmenu.add_command(label="Docs")
-		helpmenu.add_command(label="About")
+		helpmenu.add_command(label="About", command=self.about_msg)
 		helpmenu.add_command(label="Credits")
 
 		self.master.config(menu=self.menubar)
 
 		self.updated = 0
 		self.current_widgets = []
+
+		global current_op
 
 		if not "Comics" in os.listdir("."):
 			self.setup_page()		
@@ -40,9 +44,17 @@ class Reader(Frame):
 			c.close()
 			conn.close()
 			
-			if not read:
+			if current_op == 0:
 				self.create_widgets()
+			elif current_op == 1:
+				self.read_page()
+			elif current_op == 2:
+				self.update_page()
+			else:
+				pass
 		
+		current_op = -1
+
 		self.grid()
 
 	def create_widgets(self):
@@ -60,15 +72,16 @@ class Reader(Frame):
 
 		self.read = Button(self, 
 							text = "READ !" , 
-							command = self.read_page)
+							command = self.read_page_setter)
 		self.read.grid(row = 5, column = 1, columnspan = 4, sticky = W)
 
 		self.update = Button(self, 
 							text = "UPDATE !" , 
-							command = self.update_page)
+							command = self.update_page_setter)
 		self.update.grid(row = 5, column = 3, columnspan = 4, sticky = W)
 	
 		self.current_widgets.extend([self.spacer1, self.intro, self.spacer2, self.read, self.update])
+
 		return
 
 	def setup_page(self):
@@ -97,6 +110,7 @@ class Reader(Frame):
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
 
 		self.current_widgets.extend([self.intro, self.setup, self.spacer, self.status])
+
 		return
 
 	def setup_db(self):
@@ -139,15 +153,28 @@ class Reader(Frame):
 
 		return
 
-	def read_page(self):
+	def read_page_setter(self):
 		self.remove_widgets()
+
+		global current_op
+		current_op = 1
 		self.quit()
 
 		return
 
-	def update_page(self):
+	def read_page(self):
+		return
+
+	def update_page_setter(self):
 		self.remove_widgets()
 
+		global current_op
+		current_op = 2
+		self.quit()
+
+		return
+
+	def update_page(self):	
 		self.intro = Label(self,
 						   text = "Update your comic collection.\n\n")
 		self.intro.grid(row = 2, column = 0, columnspan = 4, sticky = W)
@@ -171,6 +198,7 @@ class Reader(Frame):
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
 
 		self.current_widgets.extend([self.intro, self.setup, self.spacer, self.status])
+
 		return	
 
 	def update_db(self):
@@ -210,18 +238,29 @@ class Reader(Frame):
 
 		return
 
+	def about_msg(self):
+		tkMessageBox.showinfo("About", "xkcd Reader is an offline reader for xkcd webcomics.\n\nVersion 1.0")
+
+		return
 
 if __name__ == '__main__':
-	root = Tk()
-	root.title("xkcd Reader")
-	root.geometry("400x400+0+0")
+	global current_op
 
-	reader = Reader(root)
+	while(True):
+		root = Tk()
+		root.title("xkcd Reader")
 
-	root.mainloop()
+		if current_op == -1:
+			break
+		elif current_op == 0:
+			root.geometry("400x400+0+0")
+		elif current_op == 1:
+			root.geometry("800x600+0+0")
+		elif current_op == 2:
+			root.geometry("400x400+0+0")
+		else:
+			pass
 
-	root.geometry("800x600+0+0")
-
-	reader = Reader(root, 1)
-
-	root.mainloop()
+		reader = Reader(root)
+		root.mainloop()
+		root.destroy()
