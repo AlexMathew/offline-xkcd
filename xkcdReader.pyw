@@ -3,6 +3,8 @@ import urllib
 import webbrowser
 import os
 import sqlite3
+import random
+from PIL import ImageTk, Image
 from xkcd import xkcd
 
 current_op = 0
@@ -36,14 +38,6 @@ class Reader(Frame):
 		if not "Comics" in os.listdir("."):
 			self.setup_page()		
 		else:
-			conn = sqlite3.connect("Comics/xkcd.db")
-			c = conn.cursor()
-			c.execute("SELECT * FROM xkcd")
-			self.comics = c.fetchall()
-			self.updated = max(self.comics)[0]
-			c.close()
-			conn.close()
-			
 			if current_op == 0:
 				self.create_widgets()
 			elif current_op == 1:
@@ -163,6 +157,19 @@ class Reader(Frame):
 		return
 
 	def read_page(self):
+		conn = sqlite3.connect("Comics/xkcd.db")
+		c = conn.cursor()
+		c.execute("SELECT * FROM xkcd")
+		self.comics = c.fetchall()
+		self.updated = max(self.comics)[0]
+		c.close()
+		conn.close()
+		
+		img = ImageTk.PhotoImage(Image.open("Comics/" + str(self.updated) +".png"))
+		self.panel = Label(self, image = img)
+		self.panel.image = img
+		self.panel.grid(row = 2, column = 0, columnspan = 4, sticky = W)
+
 		return
 
 	def update_page_setter(self):
@@ -206,6 +213,9 @@ class Reader(Frame):
 			x = xkcd()
 			conn = sqlite3.connect("Comics/xkcd.db")
 			c = conn.cursor()
+			c.execute("SELECT * FROM xkcd")
+			self.comics = c.fetchall()
+			self.updated = max(self.comics)[0]
 
 			if not self.updated == int(x.comic_set[0][0]):
 				for comic in x.comic_set:
@@ -253,7 +263,7 @@ if __name__ == '__main__':
 		if current_op == -1:
 			break
 		elif current_op == 0:
-			root.geometry("400x400+0+0")
+			root.geometry("200x200+0+0")
 		elif current_op == 1:
 			root.geometry("800x600+0+0")
 		elif current_op == 2:
