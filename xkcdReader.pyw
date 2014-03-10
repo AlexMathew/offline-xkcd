@@ -4,10 +4,14 @@ import webbrowser
 import os
 import sqlite3
 import random
+import tkMessageBox
 from PIL import ImageTk, Image
 from xkcd import xkcd
 
-current_op = 0
+if not "Comics" in os.listdir("."):
+	current_op = 3		
+else:
+	current_op = 0
 
 class Reader(Frame):
 	def __init__(self, master):
@@ -24,7 +28,7 @@ class Reader(Frame):
 
 		helpmenu = Menu(self.menubar, tearoff=0)
 		self.menubar.add_cascade(label="Help", menu=helpmenu)
-		helpmenu.add_command(label="Docs")
+		helpmenu.add_command(label="Check out xkcd", command=self.open_xkcd)
 		helpmenu.add_command(label="About", command=self.about_msg)
 		helpmenu.add_command(label="Credits")
 
@@ -41,6 +45,14 @@ class Reader(Frame):
 			if current_op == 0:
 				self.create_widgets()
 			elif current_op == 1:
+				conn = sqlite3.connect("Comics/xkcd.db")
+				c = conn.cursor()
+				c.execute("SELECT * FROM xkcd")
+				self.comics = c.fetchall()
+				self.updated = max(self.comics)[0]
+				self.current_comic = self.updated  
+				c.close()
+				conn.close()
 				self.read_page()
 			elif current_op == 2:
 				self.update_page()
@@ -99,7 +111,9 @@ class Reader(Frame):
 						   height = 10, 
 						   wrap = WORD)
 		self.status.delete(0.0, END)
-		self.status.insert(0.0, "Click 'SET UP' to start loading the comics.. \n\n" + \
+		self.status.insert(0.0, "Click 'SET UP' to start loading the comics.. \n" + \
+								"This may take a very long time to run. SO just run it, and carry on with your work for an " + \
+								"hour or so. Trust me, it's worth the wait !\n" + \
 								"If a 'Not Responding' error appears, just ignore it. We're fine. ")
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
 
@@ -157,14 +171,6 @@ class Reader(Frame):
 		return
 
 	def read_page(self):
-		conn = sqlite3.connect("Comics/xkcd.db")
-		c = conn.cursor()
-		c.execute("SELECT * FROM xkcd")
-		self.comics = c.fetchall()
-		self.updated = max(self.comics)[0]
-		c.close()
-		conn.close()
-		
 		img = ImageTk.PhotoImage(Image.open("Comics/" + str(self.updated) +".png"))
 		self.panel = Label(self, image = img)
 		self.panel.image = img
@@ -250,7 +256,10 @@ class Reader(Frame):
 
 	def about_msg(self):
 		tkMessageBox.showinfo("About", "xkcd Reader is an offline reader for xkcd webcomics.\n\nVersion 1.0")
+		return
 
+	def open_xkcd(self):
+		webbrowser.open_new_tab("http://xkcd.com")
 		return
 
 if __name__ == '__main__':
@@ -268,6 +277,8 @@ if __name__ == '__main__':
 			root.geometry("800x600+0+0")
 		elif current_op == 2:
 			root.geometry("400x400+0+0")
+		elif current_op == 3:
+			root.geometry("500x500+0+0")
 		else:
 			pass
 
