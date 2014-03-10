@@ -224,7 +224,7 @@ class Reader(Frame):
 			self.updated = max(self.comics)[0]
 
 			if not self.updated == int(x.comic_set[0][0]):
-				for comic in reversed(x.comic_set[self.updated:]):
+				for comic in reversed(x.comic_set[:-self.updated]):
 					number = int(comic[0])
 					img, title, desc, explain = x.get_comic(number)
 					c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
