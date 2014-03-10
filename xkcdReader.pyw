@@ -112,7 +112,7 @@ class Reader(Frame):
 						   wrap = WORD)
 		self.status.delete(0.0, END)
 		self.status.insert(0.0, "Click 'SET UP' to start loading the comics.. \n" + \
-								"This may take a very long time to run. SO just run it, and carry on with your work for an " + \
+								"This may take a very long time to run. So just run it, and carry on with your work for an " + \
 								"hour or so. Trust me, it's worth the wait !\n" + \
 								"If a 'Not Responding' error appears, just ignore it. We're fine. ")
 		self.status.grid(row = 9, column = 0, columnspan = 4, sticky = W)
@@ -132,12 +132,12 @@ class Reader(Frame):
 
 			self.updated = int(x.comic_set[0][0])
 
-			for comic in x.comic_set:
+			for comic in reversed(x.comic_set):
 				number = int(comic[0])
 				img, title, desc, explain = x.get_comic(number)
 				c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
 				urllib.urlretrieve(img, "Comics/" + comic[0] + ".png")
-				if number % 50 == 0:
+				if number % 10 == 0:
 					conn.commit()
 
 			conn.commit()
@@ -224,14 +224,12 @@ class Reader(Frame):
 			self.updated = max(self.comics)[0]
 
 			if not self.updated == int(x.comic_set[0][0]):
-				for comic in x.comic_set:
+				for comic in reversed(x.comic_set[self.updated:]):
 					number = int(comic[0])
-					if number == self.updated:
-						break
 					img, title, desc, explain = x.get_comic(number)
 					c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
 					urllib.urlretrieve(img, "Comics/" + comic[0] + ".png")
-					if number % 50 == 0:
+					if number % 10 == 0:
 						conn.commit()
 
 				conn.commit()
