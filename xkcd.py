@@ -43,9 +43,9 @@ class xkcd(object):
 				print 'Please turn on your internet connection'
 			comic_soup = Soup(comicHtml)
 			comic_img_list = comic_soup.findAll('img')
-			comic_title = comic_img_list[1].get('alt')
-			comic_img = comic_img_list[1].get('src')
-			comic_desc = comic_img_list[1].get('title')
+			comic_title = comic_img_list[-2].get('alt')
+			comic_img = comic_img_list[-2].get('src')
+			comic_desc = comic_img_list[-2].get('title')
 			comic_explain = "http://www.explainxkcd.com/wiki/index.php/" + str(comic_num)
 			return (comic_img, comic_title, comic_desc, comic_explain)
 		except InvalidLinkException, (instance):
