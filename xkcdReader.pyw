@@ -34,7 +34,6 @@ class Reader(Frame):
 
 		self.master.config(menu=self.menubar)
 
-		self.updated = 0
 		self.current_widgets = []
 
 		global current_op
@@ -48,10 +47,10 @@ class Reader(Frame):
 				conn = sqlite3.connect("Comics/xkcd.db")
 				c = conn.cursor()
 				c.execute("SELECT * FROM xkcd")
-				comics = c.fetchall()
-				self.updated = max(comics)[0]
-				self.upper = self.updated + 1
-				self.current_comic = self.updated % self.upper
+				self.comics = sorted(c.fetchall())
+				self.updated = -1
+				self.comic_count = len(self.comics)
+				self.current_comic = self.updated % self.comic_count
 				c.close()
 				conn.close()
 				self.read_page()
@@ -174,68 +173,65 @@ class Reader(Frame):
 		return
 
 	def read_page(self):
-		self.spacer1 = Label(self, text = "\n")
-		self.spacer1.grid(row = 0, column = 0, columnspan = 1, sticky = W)
+		comic_number, comic_title, comic_desc, comic_explain = self.comics[self.current_comic]
 
-		try:
-			self.comic_no = Label(self, text = "xkcd #" + str(self.current_comic))
-			self.comic_no.grid(row = 2, column = 0, columnspan = 1, sticky = W)
+		self.comic_no = Label(self, text = "xkcd #" + str(comic_number) + " - " + comic_title)
+		self.comic_no.grid(row = 2, column = 0, columnspan = 1, sticky = W)
 
-			self.spacer2 = Label(self, text = "\n")
-			self.spacer2.grid(row = 3, column = 0, columnspan = 1, sticky = W)
+		new_desc = ""
+		flag = False
 
-			i = Image.open("Comics/" + str(self.current_comic) +".png")
-			if i.size > (450, 350):
-				img = ImageTk.PhotoImage(i.resize(size = (450, 350)))
-			else:
-				img = ImageTk.PhotoImage(i)
-		except Exception as detail:
-			self.current_comic += 1
-			
-			self.comic_no = Label(self, text = "xkcd #" + str(self.current_comic))
-			self.comic_no.grid(row = 2, column = 0, columnspan = 1, sticky = W)
+		for i, char in enumerate(comic_desc):
+			if (i+1) > 120 and char == " " and not flag:
+				new_desc += "\n"
+				flag = True
+			new_desc += char
 
-			self.spacer2 = Label(self, text = "\n")
-			self.spacer2.grid(row = 3, column = 0, columnspan = 1, sticky = W)
+		self.comic_description = Label(self, text = new_desc)
+		self.comic_description.grid(row = 3, column = 0, columnspan = 1, sticky = W)
 
-			i = Image.open("Comics/" + str(self.current_comic) +".png")
-			if i.size > (450, 350):
-				img = ImageTk.PhotoImage(i.resize(size = (450, 350)))
-			else:
-				img = ImageTk.PhotoImage(i)
+		i = Image.open("Comics/" + str(self.current_comic + 1) +".png")
+		if i.size > (500, 400):
+			img = ImageTk.PhotoImage(i.resize(size = (500, 400)))
+		else:
+			img = ImageTk.PhotoImage(i)
 		
-		self.panel = Label(self, image = img, width = 500, height = 400)
+		self.panel = Label(self, image = img, width = 515, height = 415)
 		self.panel.image = img
 		self.panel.grid(row = 5, column = 0, columnspan = 1, sticky = W)
 
-		self.spacer3 = Label(self, text = "\n")
-		self.spacer3.grid(row = 7, column = 0, columnspan = 1, sticky = W)
+		self.explain = Button(self, text = " Explain this xkcd ! ", command = self.explain_this)
+		self.explain.grid(row = 7, column = 0, columnspan = 1, sticky = W)
 
 		self.prev_button = Button(self, text = "< Previous  " , command = self.prev_comic)
-		self.prev_button.grid(row = 8, column = 1, columnspan = 1, sticky = W)
+		self.prev_button.grid(row = 9, column = 0, columnspan = 1, sticky = W)
 
 		self.rand_button = Button(self, text = "  Random  " , command = self.rand_comic)
-		self.rand_button.grid(row = 8, column = 3, columnspan = 1, sticky = W)
+		self.rand_button.grid(row = 10, column = 0, columnspan = 1, sticky = W)
 
 		self.next_button = Button(self, text = "  Next >" , command = self.next_comic)
-		self.next_button.grid(row = 8, column = 5, columnspan = 1, sticky = W)
+		self.next_button.grid(row = 11, column = 0, columnspan = 1, sticky = W)
 
-		self.current_widgets.extend([self.spacer1, self.comic_no, self.spacer2, self.panel, self.spacer3])
+		self.current_widgets.extend([self.comic_no, self.comic_description, self.panel, self.explain])
 		self.current_widgets.extend([self.prev_button, self.rand_button, self.next_button])
 
 		return
 
+	def explain_this(self):
+		webbrowser.open_new_tab(self.comics[self.current_comic][3])
+		return
+
 	def prev_comic(self):
 		self.remove_widgets()
-		self.current_comic = self.current_comic - 1 if not self.current_comic == 1 else self.updated
-		self.current_comic %= self.upper
+		self.current_comic -= 1
+		self.current_comic %= self.comic_count
 		self.read_page()
 
 		return
 
 	def rand_comic(self):
 		self.remove_widgets()
-		self.current_comic = random.randint(1, self.updated)
+		self.current_comic = random.randint(1, self.comic_count - 1)
 		self.read_page()
 
 		return
@@ -243,7 +239,7 @@ class Reader(Frame):
 	def next_comic(self):
 		self.remove_widgets()
 		self.current_comic += 1
-		self.current_comic %= self.upper
+		self.current_comic %= self.comic_count
 		self.read_page()
 
 		return
@@ -291,10 +287,10 @@ class Reader(Frame):
 			c = conn.cursor()
 			c.execute("SELECT * FROM xkcd")
 			self.comics = c.fetchall()
-			self.updated = max(self.comics)[0]
+			self.comic_count = len(self.comics)
 
-			if not self.updated == int(x.comic_set[0][0]):
-				for comic in reversed(x.comic_set[:-self.updated]):
+			if not self.comic_count == len(x.comic_set):
+				for comic in reversed(x.comic_set[:-self.comic_count + 1]):
 					number = int(comic[0])
 					img, title, desc, explain = x.get_comic(number)
 					c.execute("INSERT INTO xkcd VALUES (?,?,?,?)", (number, title, desc, explain))
@@ -304,10 +300,10 @@ class Reader(Frame):
 
 				conn.commit()
 
-				self.updated = int(x.comic_set[0][0]) 
+				cur = x.comic_set[0][0]
 
 				self.status.delete(0.0, END)
-				self.status.insert(0.0, "And we're done ! Loaded till comic #" + str(self.updated))
+				self.status.insert(0.0, "And we're done ! Loaded till comic #" + str(cur))
 
 			else:
 				self.status.delete(0.0, END)
@@ -317,6 +313,8 @@ class Reader(Frame):
 			conn.close()
 
 		except Exception as detail:
+			self.status.delete(0.0, END)
+			self.status.insert(0.0, detail)
 			if tkMessageBox.askretrycancel("Error !", "An error occurred. Probably your internet was turned off. " + \
 				 								      "Or the Universe hates you. Retry if you want to. "):
 				self.update_db()
@@ -347,7 +345,7 @@ if __name__ == '__main__':
 		elif current_op == 0:
 			root.geometry("200x200+0+0")
 		elif current_op == 1:
-			root.geometry("800x600+0+0")
+			root.geometry("825x625+0+0")
 		elif current_op == 2:
 			root.geometry("400x400+0+0")
 		elif current_op == 3:
